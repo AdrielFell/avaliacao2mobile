@@ -1,22 +1,10 @@
 import { View, Text, Button, StyleSheet, FlatList, TextInput, Alert } from "react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import * as SQLite from 'expo-sqlite';
-
-const db = SQLite.openDatabaseSync('treinosDB.sql');
-
-db.execSync(`
-    PRAGMA journal_mode = WAL;
-    CREATE TABLE IF NOT EXISTS treinos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, 
-    atividade TEXT NOT NULL, 
-    duracaominuto INTEGER NOT NULL, 
-    categoria TEXT NOT NULL);
-    
-`);
+import { db, initDb } from "../data/db";
 
 export default function TelaTreinos() {
-
+    const [id, setId,] = useState("");
     const [atividade, setAtividade] = useState("");
     const [duracaominuto, setDuracaominuto] = useState("");
     const [categoria, setCategoria] = useState("");
@@ -24,6 +12,11 @@ export default function TelaTreinos() {
 
     function getTreinos() {
         return db.getAllSync('SELECT * FROM treinos');
+    }
+
+    function getTreinoById(id) {
+        const [treino] = db.getAllSync('SELECT * FROM treinos WHERE id = ?', [id]);
+        return treino;
     }
 
     function killTreino() {
@@ -34,13 +27,29 @@ export default function TelaTreinos() {
         db.runSync('INSERT INTO treinos (atividade, duracaominuto, categoria) VALUES (?, ?, ?)', [atividade, duracaominuto, categoria]);
     }
 
+    function updateTreino(id, atividade, duracaominuto, categoria) {
+        db.runSync('UPDATE treinos SET atividade = ?, duracaominuto = ?, categoria = ? WHERE id = ?', [atividade, duracaominuto, categoria, id]);
+    }
+
+    function editaTreino(id) {
+        setId(id);
+        const treino = getTreinoById(id);
+        if (!treino) return;
+        preencheCampos(treino.atividade, treino.duracaominuto, treino.categoria);
+    }
+
+    function resetId() {
+        setId(null);
+        limpaCampos();
+    }
+
     function carregarTreinos() {
         const dados = getTreinos();
         setTreinos(dados);
     }
 
 
-    function salvarTreino() {
+    function salvarTreino(id) {
         const atv = atividade.trim();
         const val = parseFloat(duracaominuto);
         const cat = categoria.trim();
@@ -60,17 +69,44 @@ export default function TelaTreinos() {
             return;
         }
 
-        insertTreino(atv, val, cat);
-        setAtividade("");
-        setDuracaominuto("");
-        setCategoria("");
-        carregarTreinos();
+        if (!id) {
+            insertTreino(atv, val, cat);
+
+        } else { updateTreino(id, atv, val, cat); resetId() }
+
+        limpaCampos();
     }
 
     function killTreino(id) {
         db.runSync('DELETE FROM treinos WHERE id = ?', [id]);
         carregarTreinos();
     }
+
+    function limpaCampos() {
+        setAtividade("");
+        setDuracaominuto("");
+        setCategoria("");
+        carregarTreinos();
+    }
+
+    function preencheCampos(atividade, duracaominuto, categoria) {
+        const atv = atividade.trim();
+        const val = parseFloat(duracaominuto);
+        const cat = categoria.trim();
+
+        setAtividade(atv);
+        setDuracaominuto(val);
+        setCategoria(cat);
+        carregarTreinos();
+    }
+
+    // Carrega as tarefas quando a tela abre
+    useEffect(() => {
+        // Carrega a database ao abrir o aplicativo
+        initDb();
+        // Executa uma única vez após o primeiro render
+        carregarTreinos();
+    }, []);
 
     return (
         <SafeAreaView style={styles.tela}>
@@ -96,7 +132,8 @@ export default function TelaTreinos() {
                     placeholder="Categoria"
                     style={styles.input}
                 />
-                <Button title="Salvar" onPress={salvarTreino} />
+                <Button title="Salvar" onPress={() => salvarTreino(id)} />
+                <Button title="Cancelar" onPress={resetId} />
             </View>
 
             <Button title="Carregar treinos" onPress={carregarTreinos} />
@@ -106,7 +143,7 @@ export default function TelaTreinos() {
                 keyExtractor={(item) => String(item.id)}
                 renderItem={({ item }) => (
                     <Text style={styles.item}>
-                        - {item.atividade} | Min {item.duracaominuto} | {item.categoria} |  <Button title="Excluir" onPress={() => killTreino(item.id)}/>
+                        - {item.atividade} | Min {item.duracaominuto} | {item.categoria} | <Button title="Editar" onPress={() => editaTreino(item.id)} /> | <Button title="Excluir" onPress={() => killTreino(item.id)} />
                     </Text>
                 )}
             />

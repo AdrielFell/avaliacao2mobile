@@ -8,5 +8,6 @@ export default function Home() {
           <Button title="Ir para TREINOS" />
         </Link>
       </View>
+      
     );
 }

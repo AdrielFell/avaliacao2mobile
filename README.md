@@ -25,10 +25,11 @@ npx expo install expo-sqlite expo-router react-native-safe-area-context react-na
 
 #Import dos comandos para utilizar#
 import { View, Text, Button, StyleSheet, FlatList, TextInput, Alert } from "react-native";
-import { useState } from "react";
+import { useState , useEffect} from "react";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as SQLite from 'expo-sqlite';
+import { db, initDb } from "../data/db";
 <Não esqueça de baixar apenas os que você vai usar>
 
 #Modelo de DB base com população#
@@ -51,5 +52,9 @@ data={treinos}
                         - {item.atividade} | Min {item.duracaominuto} | {item.categoria} |  <Button title="Excluir" onPress={() => killTreino(item.id)}/>
                     </Text>
                 )}
-
- - 
+- router: Transforma o nosso aplicativo em uma estrutura de "Explorador de arquivos", setando por padrão, dentro da pasta app, o index.js como pagina principal, a partir dela, você pode colocar links para as outras paginas referenciando elas como no explorador de arquivos. 
+    Ex:
+    <Link href="/crudTreinos" asChild>
+          <Button title="Ir para TREINOS" />
+    </Link>
+- 
