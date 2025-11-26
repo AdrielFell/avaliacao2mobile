@@ -1,9 +1,8 @@
 {
-  "name": "appTreinos",
-  "slug": "appTreinos",
-  "scheme": "appTreinos",
+  "name": "gameVault",
+  "slug": "gameVault",
+  "scheme": "gameVault",
   "plugins": [
-    "expo-sqlite",
     "expo-router"
   ]
 }
